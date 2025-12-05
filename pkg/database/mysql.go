@@ -13,13 +13,30 @@ import (
 )
 
 func NewMySQLConnection(cfg *config.Config) (*gorm.DB, error) {
-	dsn := fmt.Sprintf("%s:%s@tcp(%s:%s)/%s?charset=utf8mb4&parseTime=True&loc=Local",
-		cfg.DBUser,
-		cfg.DBPassword,
-		cfg.DBHost,
-		cfg.DBPort,
-		cfg.DBName,
-	)
+	var dsn string
+
+	if cfg.CloudSQLConnectionName != "" {
+		// Koneksi cloud run
+		log.Println("Using Cloud SQL Unix Socket connection.")
+		// Format DSN: user:pass@unix(/cloudsql/PROJECT:REGION:INSTANCE)/dbname?params
+		dsn = fmt.Sprintf("%s:%s@unix(/cloudsql/%s)/%s?charset=utf8mb4&parseTime=True&loc=Local",
+			cfg.DBUser,
+			cfg.DBPassword,
+			cfg.CloudSQLConnectionName, // Ini adalah project:region:instance
+			cfg.DBName,
+		)
+	} else {
+		// Koneksi local
+		log.Println("Using standard TCP connection.")
+		// Format DSN: user:pass@tcp(host:port)/dbname?params
+		dsn = fmt.Sprintf("%s:%s@tcp(%s:%s)/%s?charset=utf8mb4&parseTime=True&loc=Local",
+			cfg.DBUser,
+			cfg.DBPassword,
+			cfg.DBHost,
+			cfg.DBPort,
+			cfg.DBName,
+		)
+	}
 
 	db, err := gorm.Open(mysql.Open(dsn), &gorm.Config{
 		Logger: logger.Default.LogMode(logger.Info),
