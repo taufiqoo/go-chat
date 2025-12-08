@@ -3,6 +3,7 @@ package main
 import (
 	"fmt"
 	"log"
+	"time"
 
 	"github.com/taufiqoo/go-chat/internal/config"
 	"github.com/taufiqoo/go-chat/internal/delivery/http/handler"
@@ -11,6 +12,7 @@ import (
 	"github.com/taufiqoo/go-chat/internal/repository/repositoryImpl"
 	"github.com/taufiqoo/go-chat/internal/service"
 	"github.com/taufiqoo/go-chat/pkg/database"
+	redisClient "github.com/taufiqoo/go-chat/pkg/redis"
 )
 
 func main() {
@@ -26,6 +28,11 @@ func main() {
 	// Auto migrate
 	if err := database.AutoMigrate(db); err != nil {
 		log.Fatalf("Failed to migrate database: %v", err)
+	}
+
+	redis := redisClient.NewRedisClient(&cfg)
+	if redis == nil {
+		log.Println(" Redis not available - rate limiting disabled")
 	}
 
 	// Initialize repositories
@@ -45,8 +52,21 @@ func main() {
 	messageHandler := handler.NewMessageHandler(messageService)
 	wsHandler := websocket.NewHandler(hub, messageService)
 
+	// Rate limiter config
+	rateLimitConfig := router.RateLimitConfig{
+		MaxRequests: 1,
+		Window:      2 * time.Minute,
+	}
+
 	// Setup router
-	r := router.SetupRouter(userHandler, messageHandler, wsHandler, &cfg)
+	r := router.SetupRouter(
+		userHandler,
+		messageHandler,
+		wsHandler,
+		&cfg,
+		redis,
+		rateLimitConfig,
+	)
 
 	// Start server
 	addr := fmt.Sprintf(":%s", cfg.ServerPort)

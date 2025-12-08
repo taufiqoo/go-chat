@@ -18,6 +18,18 @@ type Config struct {
 	CloudSQLConnectionName string
 	JWTSecret              string
 	JWTExpiration          int
+
+	RedisHost     string
+	RedisPort     string
+	RedisPassword string
+	RedisDB       int
+}
+
+type RedisConfig struct {
+	Host     string
+	Port     string
+	Password string
+	DB       int
 }
 
 func LoadConfig() Config {
@@ -36,6 +48,20 @@ func LoadConfig() Config {
 		CloudSQLConnectionName: getEnv("CLOUD_SQL_CONNECTION_NAME", ""),
 		JWTSecret:              getEnv("JWT_SECRET", "secret"),
 		JWTExpiration:          getEnvInt("JWT_EXPIRATION", 24),
+
+		RedisHost:     getEnv("REDIS_HOST", "localhost"),
+		RedisPort:     getEnv("REDIS_PORT", "6379"),
+		RedisPassword: getEnv("REDIS_PASSWORD", ""),
+		RedisDB:       getEnvInt("REDIS_DB", 0),
+	}
+}
+
+func (c *Config) GetRedisConfig() RedisConfig {
+	return RedisConfig{
+		Host:     getEnv("REDIS_HOST", "localhost"),
+		Port:     getEnv("REDIS_PORT", "6379"),
+		Password: getEnv("REDIS_PASSWORD", ""),
+		DB:       getEnvInt("REDIS_DB", 0),
 	}
 }
 

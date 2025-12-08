@@ -1,6 +1,9 @@
 package router
 
 import (
+	"time"
+
+	"github.com/redis/go-redis/v9"
 	"github.com/taufiqoo/go-chat/internal/config"
 	"github.com/taufiqoo/go-chat/internal/delivery/http/handler"
 	"github.com/taufiqoo/go-chat/internal/delivery/http/middleware"
@@ -9,17 +12,33 @@ import (
 	"github.com/gin-gonic/gin"
 )
 
+type RateLimitConfig struct {
+	MaxRequests int
+	Window      time.Duration
+}
+
 func SetupRouter(
 	userHandler *handler.UserHandler,
 	messageHandler *handler.MessageHandler,
 	wsHandler *websocket.Handler,
 	cfg *config.Config,
+	redisClient *redis.Client,
+	rateLimitConfig RateLimitConfig,
 ) *gin.Engine {
 	r := gin.Default()
 
 	// Middleware
 	r.Use(middleware.CORSMiddleware())
 	r.Use(middleware.LoggerMiddleware())
+
+	if redisClient != nil {
+		rateLimiter := middleware.NewRateLimiter(
+			redisClient,
+			rateLimitConfig.MaxRequests,
+			rateLimitConfig.Window,
+		)
+		r.Use(rateLimiter.Middleware())
+	}
 
 	// Health check
 	r.GET("/health", func(c *gin.Context) {

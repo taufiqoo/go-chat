@@ -62,7 +62,7 @@ jobs:
             --region ${{ env.REGION }} \
             --allow-unauthenticated \
             --add-cloudsql-instances ${{ env.CLOUD_SQL_INSTANCE }} \
-            --set-env-vars "CLOUD_SQL_CONNECTION_NAME=${{ env.CLOUD_SQL_INSTANCE }},DB_USER=root,DB_PASSWORD=${{ secrets.DB_PASSWORD }},DB_NAME=gochat,JWT_SECRET=${{ secrets.JWT_SECRET }}" \
+            --set-env-vars "CLOUD_SQL_CONNECTION_NAME=${{ env.CLOUD_SQL_INSTANCE }},DB_USER=root,DB_PASSWORD=${{ secrets.DB_PASSWORD }},DB_NAME=gochat,JWT_SECRET=${{ secrets.JWT_SECRET }},REDIS_HOST=${{ secrets.REDIS_HOST }},REDIS_PORT=6379" \
             --max-instances 10 \
             --timeout 3600 \
             --cpu 1 \
