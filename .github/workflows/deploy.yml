@@ -11,7 +11,7 @@ env:
   REGION: ${{ secrets.GCP_REGION }}
   SERVICE_NAME: go-chat-api
   IMAGE_NAME: go-chat-api
-  REGISTRY: asia-southeast2-docker.pkg.dev
+  ARTIFACT_REGISTRY_REPO: gcr.io
 
 jobs:
   deploy:
@@ -42,11 +42,11 @@ jobs:
 
       - name: Configure Docker for Artifact Registry
         run: |
-          gcloud auth configure-docker ${{ env.REGION }}-docker.pkg.dev
+          gcloud auth configure-docker us-docker.pkg.dev
 
       - name: Build and Push Docker Image
         run: |
-          IMAGE_PATH="${{ env.REGION }}-docker.pkg.dev/${{ env.PROJECT_ID }}/${{ env.SERVICE_NAME }}/${{ env.IMAGE_NAME }}"
+          IMAGE_PATH="us-docker.pkg.dev/${{ env.PROJECT_ID }}/${{ env.ARTIFACT_REGISTRY_REPO }}/${{ env.IMAGE_NAME }}"
           docker build -t ${IMAGE_PATH}:${{ github.sha }} .
           docker tag ${IMAGE_PATH}:${{ github.sha }} ${IMAGE_PATH}:latest
           docker push ${IMAGE_PATH}:${{ github.sha }}
@@ -54,7 +54,7 @@ jobs:
 
       - name: Deploy to Cloud Run
         run: |
-          IMAGE_PATH="${{ env.REGION }}-docker.pkg.dev/${{ env.PROJECT_ID }}/${{ env.SERVICE_NAME }}/${{ env.IMAGE_NAME }}"
+          IMAGE_PATH="us-docker.pkg.dev/${{ env.PROJECT_ID }}/${{ env.ARTIFACT_REGISTRY_REPO }}/${{ env.IMAGE_NAME }}"
           gcloud run deploy ${{ env.SERVICE_NAME }} \
             --image ${IMAGE_PATH}:${{ github.sha }} \
             --platform managed \
